@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0002_alter_cartitem_id'),
+        ("api", "0002_alter_cartitem_id"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='cartitem',
-            name='id',
+            model_name="cartitem",
+            name="id",
             field=models.UUIDField(editable=False, primary_key=True, serialize=False),
         ),
     ]
