@@ -1,57 +1,31 @@
 from api.application.domain.serislizers import CartSerializer
-from rest_framework import viewsets
-from .models import Cart
+from api.application.services import CartServices
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from .models import cart
 
-
-"""
-API endpoint for interacting with Cart objects.
-
-Use the following endpoints to interact with this view:
-
-GET /api/carts/ :
-    Retrieves a list of all Cart objects.
-
-POST /api/carts/ :
-    Creates a new Cart object. The request body should contain a JSON representation of the Cart.
-    For example:
-        {
-            "items": [
-                {
-                    "id": "<item_id>",
-                    "name": "<item_name>",
-                    "quantity": <quantity>,
-                    "price": <price>
-                },
-                ...
-            ]
-        }
-
-GET /api/carts/<cart_id>/ :
-    Retrieves a detailed view of a specific Cart object by ID.
-    
-PATCH /api/carts/<cart_id>/ :
-    Partially updates a specific Cart object by ID. The request body should contain a JSON representation of the state changes to apply to the Cart.
-    The request body should contain a JSON representation of the Cart.
-    For example:
-        {
-            "items": [
-                {
-                    "id": "<item_id>",
-                    "name": "<item_name>",
-                    "quantity": <quantity>,
-                    "price": <price>
-                },
-                ...
-            ]
-        }
-
-
-DELETE /api/carts/<cart_id>/ :
-    Deletes a specific Cart object by ID.
-
-"""
 
 
 class CartViewSet(viewsets.ModelViewSet):
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
+    
+    @action(detail=True, methods=["post"])
+    def delete_item(self, request, pk=None):
+        try:
+            item_id = request.data.get("item_id")
+            quantity = request.data.get("quantity", 1)
+
+            if not item_id or int(quantity) <= 0:
+                raise ValidationError("Item ID and a valid quantity are required.")
+
+            cart = Cart.objects.get(pk=pk)
+            updated_cart = CartServices.delete_cart_item(cart=cart, item_id=item_id, quantity=int(quantity))
+
+            return Response(CartSerializer(updated_cart).data, status=status.HTTP_200_OK)
+        except Cart.DoesNotExist:
+            return Response({"detail": "Cart not found."}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"detail": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

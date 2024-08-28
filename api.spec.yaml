@@ -1,175 +1,155 @@
 openapi: 3.0.0
 info:
-  title: Shopping Cart API
-  description: |
-    Shopping Cart API is a REST API responsible for manage the shopping car for an e-commerce with a Blockchain storage 
-    system, where the users could create, update and delete their cart.
+  title: Cart API
   version: 1.0.0
 paths:
-  /carts/{id}:
+  /carts/:
     get:
-      summary: |
-        This endpoint returns a cart for the given id.
-      parameters:
-        - name: id
-          description: The id of the cart.
-          required: true
-          in: path
-          schema:
-            type: string
-            format: uuid
+      summary: Retrieve all carts
+      operationId: getCarts
       responses:
         '200':
-          description: created
+          description: List of carts
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateCartRes'
-        '404':
-          description: Cart not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Cart not found for the given ID
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cart'
     post:
-      summary: |
-        This endpoint creates a cart for the given id.
-      parameters:
-        - name: id
-          description: The id of the cart.
-          required: true
-          in: path
-          schema:
-            type: string
-            format: uuid
+      summary: Create a new cart
+      operationId: createCart
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCartReq'
+              $ref: '#/components/schemas/CartCreateRequest'
       responses:
         '201':
-          description: created
-        '409':
-          description: Already exists
+          description: Cart created
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Invalid identifier.
-        '400':
-          description: Invalid body provided
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Invalid body provided, check the payload.
-    patch:
-      summary: |
-        This endpoint updates totally or partially a cart for the given id.
+                $ref: '#/components/schemas/Cart'
+  /carts/{cartId}/:
+    get:
+      summary: Retrieve a single cart
+      operationId: getCart
       parameters:
-        - name: id
-          description: The id of the cart.
-          required: true
+        - name: cartId
           in: path
+          required: true
           schema:
             type: string
-            format: uuid
+      responses:
+        '200':
+          description: A cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+    post:
+      summary: Update a cart with new items
+      operationId: updateCart
+      parameters:
+        - name: cartId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCartReq'
+              $ref: '#/components/schemas/CartUpdateRequest'
       responses:
         '200':
-          description: created
-        '404':
-          description: Not found
+          description: Cart updated
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Cart not found for the given id
-        '400':
-          description: Invalid body provided
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Invalid body provided, check the payload.
+                $ref: '#/components/schemas/Cart'
     delete:
-      summary: |
-        This endpoint deletes a cart for the given id.
+      summary: Delete a cart
+      operationId: deleteCart
       parameters:
-        - name: id
-          description: The id of the cart.
-          required: true
+        - name: cartId
           in: path
+          required: true
           schema:
             type: string
-            format: uuid
+      responses:
+        '204':
+          description: Cart deleted
+  /carts/{cartId}/delete-item/:
+    post:
+      summary: Delete a specific quantity of an item in a cart
+      operationId: deleteCartItem
+      parameters:
+        - name: cartId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteItemRequest'
       responses:
         '200':
-          description: deleted
-        '404':
-          description: Cart not found
+          description: Cart updated with item deleted
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: Cart not found for the given ID
+                $ref: '#/components/schemas/Cart'
 components:
   schemas:
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+        hash:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
     CartItem:
       type: object
       properties:
         id:
           type: string
-          format: uuid
         name:
           type: string
         quantity:
-          type: number
+          type: integer
         price:
           type: number
-    CartItems:
-      type: array
-      items:
-        $ref: '#/components/schemas/CartItem'
-    CreateCartReq:
+          format: float
+    CartCreateRequest:
       type: object
       properties:
         items:
-          $ref: '#/components/schemas/CartItems'
-    UpdateCartReq:
-      properties:
-        items:
-          $ref: '#/components/schemas/CartItems'
-    CreateCartRes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+    CartUpdateRequest:
       type: object
       properties:
-        id:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+    DeleteItemRequest:
+      type: object
+      properties:
+        item_id:
           type: string
-          format: uuid
-        items:
-          $ref: '#/components/schemas/CartItems'
-
+        quantity:
+          type: integer
+          example: 1

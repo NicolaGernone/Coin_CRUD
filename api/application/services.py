@@ -1,40 +1,16 @@
 import hashlib
 import time
 import uuid
-
-from api.application.domain.entities import Cart, CartItem
-
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError
+from api.models import Cart, CartItem
 
 class CartServices:
-    """
-    Calculates a SHA256 hash using the provided index, previous_hash, timestamp, and data.
-
-    Parameters:
-    index (str): The index of the item.
-    previous_hash (str): The hash of the previous item.
-    timestamp (int): The creation timestamp of the item.
-    data (str): The name of the item.
-
-    Returns:
-    str: The calculated hash.
-    """
 
     @staticmethod
-    def calculate_hash(
-        index: str, previous_hash: str, timestamp: int, data: str
-    ) -> str:
+    def calculate_hash(index: str, previous_hash: str, timestamp: int, data: str) -> str:
         value = str(index) + str(previous_hash) + str(timestamp) + str(data)
         return hashlib.sha256(value.encode("utf-8")).hexdigest()
-
-    """
-    Calculates the previous hash of an item and assigns it to the item.
-
-    Parameters:
-    item (CartItem): The item to calculate the previous hash for.
-
-    Returns:
-    CartItem: The item with assigned previous_hash and hash.
-    """
 
     @staticmethod
     def calculate_previous_hash(item: CartItem) -> CartItem:
@@ -51,17 +27,6 @@ class CartServices:
             )
         item.save()
         return item
-
-    """
-    Creates new items for a cart.
-
-    Parameters:
-    cart (Cart): The cart to add items to.
-    items (list): The items to add to the cart.
-
-    Returns:
-    None
-    """
 
     @staticmethod
     def create_item(cart: Cart, items: list) -> None:
@@ -82,16 +47,6 @@ class CartServices:
                 )
             )
 
-    """
-    Creates a new cart and its associated items.
-
-    Parameters:
-    data (dict): The data for the new cart and items.
-
-    Returns:
-    Cart: The created cart.
-    """
-
     @staticmethod
     def create_cart(data: dict) -> Cart:
         id = uuid.uuid4()
@@ -100,19 +55,19 @@ class CartServices:
         CartServices.create_item(cart=cart, items=list(data["items"]))
         return cart
 
-    """
-    Updates a cart by adding new items to it.
-
-    Parameters:
-    cart (Cart): The cart to update.
-    data (dict): The data for the new items.
-
-    Returns:
-    Cart: The updated cart.
-    """
-
     @staticmethod
     def update_cart(cart: Cart, data: dict) -> Cart:
-        # Add at the end of the chain
         CartServices.create_item(cart=cart, items=list(data["items"]))
+        return cart
+
+    @staticmethod
+    def delete_cart_item(cart: Cart, item_id: str, quantity: int) -> Cart:
+        cart_item = get_object_or_404(CartItem, pk=item_id, cart=cart)
+
+        if cart_item.quantity <= quantity:
+            cart_item.delete()
+        else:
+            cart_item.quantity -= quantity
+            cart_item.save()
+
         return cart
