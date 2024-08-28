@@ -1,0 +1,175 @@
+openapi: 3.0.0
+info:
+  title: Shopping Cart API
+  description: |
+    Shopping Cart API is a REST API responsible for manage the shopping car for an e-commerce with a Blockchain storage 
+    system, where the users could create, update and delete their cart.
+  version: 1.0.0
+paths:
+  /carts/{id}:
+    get:
+      summary: |
+        This endpoint returns a cart for the given id.
+      parameters:
+        - name: id
+          description: The id of the cart.
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCartRes'
+        '404':
+          description: Cart not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cart not found for the given ID
+    post:
+      summary: |
+        This endpoint creates a cart for the given id.
+      parameters:
+        - name: id
+          description: The id of the cart.
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCartReq'
+      responses:
+        '201':
+          description: created
+        '409':
+          description: Already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid identifier.
+        '400':
+          description: Invalid body provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid body provided, check the payload.
+    patch:
+      summary: |
+        This endpoint updates totally or partially a cart for the given id.
+      parameters:
+        - name: id
+          description: The id of the cart.
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartReq'
+      responses:
+        '200':
+          description: created
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cart not found for the given id
+        '400':
+          description: Invalid body provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid body provided, check the payload.
+    delete:
+      summary: |
+        This endpoint deletes a cart for the given id.
+      parameters:
+        - name: id
+          description: The id of the cart.
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: deleted
+        '404':
+          description: Cart not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cart not found for the given ID
+components:
+  schemas:
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantity:
+          type: number
+        price:
+          type: number
+    CartItems:
+      type: array
+      items:
+        $ref: '#/components/schemas/CartItem'
+    CreateCartReq:
+      type: object
+      properties:
+        items:
+          $ref: '#/components/schemas/CartItems'
+    UpdateCartReq:
+      properties:
+        items:
+          $ref: '#/components/schemas/CartItems'
+    CreateCartRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        items:
+          $ref: '#/components/schemas/CartItems'
+
